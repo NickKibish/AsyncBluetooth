@@ -1,7 +1,7 @@
 //  Copyright (c) 2021 Manuel Fernandez-Peix Perez. All rights reserved.
 
 import Foundation
-import CoreBluetooth
+import CoreBluetoothMock
 
 /// General helper functions used by the Central Manager.
 struct CentralManagerUtils {
@@ -9,7 +9,7 @@ struct CentralManagerUtils {
     /// Whether Bluetooth is ready to be used or not given a bluetoothState.
     /// - Returns: success when `poweredOn`; failure when `unsupported`, `unauthorized` or `poweredOff`; and
     ///            nil for `unknown` or `resetting`.
-    static func isBluetoothReady(_ bluetoothState: CBManagerState) -> Result<Void, Error>? {
+    static func isBluetoothReady(_ bluetoothState: CBMManagerState) -> Result<Void, Error>? {
         guard let isBluetoothReady: Bool = Self.isBluetoothReady(bluetoothState) else {
             return nil
         }
@@ -21,7 +21,7 @@ struct CentralManagerUtils {
     /// Whether Bluetooth is ready to be used or not given a bluetoothState.
     /// - Returns: true when `poweredOn`; false when `unsupported`, `unauthorized` or `poweredOff`; and
     ///            nil for `unknown` or `resetting`.
-    private static func isBluetoothReady(_ bluetoothState: CBManagerState) -> Bool? {
+    private static func isBluetoothReady(_ bluetoothState: CBMManagerState) -> Bool? {
         switch bluetoothState {
         case .poweredOn:
             return true

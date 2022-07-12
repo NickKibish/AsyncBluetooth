@@ -1,19 +1,19 @@
 //  Copyright (c) 2021 Manuel Fernandez-Peix Perez. All rights reserved.
 
 import Foundation
-import CoreBluetooth
+import CoreBluetoothMock
 
 /// An object that provides further information about a remote peripheral’s characteristic.
 /// - This class acts as a wrapper for `CBDescriptor`.
 public struct Descriptor {
-    let cbDescriptor: CBDescriptor
+    let cbDescriptor: CBMDescriptor
     
-    init(_ cbDescriptor: CBDescriptor) {
+    init(_ cbDescriptor: CBMDescriptor) {
         self.cbDescriptor = cbDescriptor
     }
     
     /// The Bluetooth-specific UUID of the descriptor.
-    public var uuid: CBUUID {
+    public var uuid: CBMUUID {
         self.cbDescriptor.uuid
     }
     

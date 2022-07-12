@@ -1,23 +1,23 @@
 //  Copyright (c) 2021 Manuel Fernandez-Peix Perez. All rights reserved.
 
 import Foundation
-import CoreBluetooth
+import CoreBluetoothMock
 
 /// A characteristic of a remote peripheral’s service.
 /// - This class acts as a wrapper around `CBCharacteristic`.
 public struct Characteristic {
-    let cbCharacteristic: CBCharacteristic
+    let cbCharacteristic: CBMCharacteristic
     
-    init(_ cbCharacteristic: CBCharacteristic) {
+    init(_ cbCharacteristic: CBMCharacteristic) {
         self.cbCharacteristic = cbCharacteristic
     }
     
     /// The Bluetooth-specific UUID of the characteristic.
-    public var uuid: CBUUID {
+    public var uuid: CBMUUID {
         self.cbCharacteristic.uuid
     }
     
-    public var properties: CBCharacteristicProperties {
+    public var properties: CBMCharacteristicProperties {
         self.cbCharacteristic.properties
     }
     

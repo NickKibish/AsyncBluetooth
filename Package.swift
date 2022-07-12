@@ -14,11 +14,13 @@ let package = Package(
             targets: ["AsyncBluetooth"]
         ),
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock.git", from: "0.14.0"),
+    ],
     targets: [
         .target(
             name: "AsyncBluetooth",
-            dependencies: [],
+            dependencies: [.product(name: "CoreBluetoothMock", package: "IOS-CoreBluetooth-Mock")],
             path: "Sources"
         ),
         .testTarget(

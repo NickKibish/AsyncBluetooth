@@ -1,7 +1,6 @@
 //  Copyright (c) 2021 Manuel Fernandez-Peix Perez. All rights reserved.
 
 import Foundation
-import CoreBluetooth
 
 /// Represents a single value gathered when scanning for peripheral.
 public struct ScanData {

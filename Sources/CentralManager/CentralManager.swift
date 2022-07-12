@@ -1,7 +1,7 @@
 //  Copyright (c) 2021 Manuel Fernandez-Peix Perez. All rights reserved.
 
 import Foundation
-import CoreBluetooth
+import CoreBluetoothMock
 import Combine
 import os.log
 
@@ -23,7 +23,7 @@ public class CentralManager {
         category: "centralManager"
     )
     
-    public var bluetoothState: CBManagerState {
+    public var bluetoothState: CBMManagerState {
         self.cbCentralManager.state
     }
     
@@ -35,16 +35,17 @@ public class CentralManager {
         self.context.eventSubject.eraseToAnyPublisher()
     }()
     
-    private let cbCentralManager: CBCentralManager
+    private let cbCentralManager: CBMCentralManager
     private let context: CentralManagerContext
-    private let cbCentralManagerDelegate: CBCentralManagerDelegate
+    private let cbCentralManagerDelegate: CBMCentralManagerDelegate
     
     // MARK: Constructors
 
     public init(dispatchQueue: DispatchQueue? = nil, options: [String: Any]? = nil) {
         self.context = CentralManagerContext()
         self.cbCentralManagerDelegate = DelegateWrapper(context: self.context)
-        self.cbCentralManager = CBCentralManager(delegate: cbCentralManagerDelegate, queue: dispatchQueue, options: options)
+        self.cbCentralManager = CBMCentralManagerFactory.instance(delegate: cbCentralManagerDelegate, queue: dispatchQueue, options: options)
+//        self.cbCentralManager = CBMCentralManager(delegate: cbCentralManagerDelegate, queue: dispatchQueue, options: options)
     }
     
     // MARK: Public
@@ -70,7 +71,7 @@ public class CentralManager {
     
     /// Scans for peripherals that are advertising services.
     public func scanForPeripherals(
-        withServices serviceUUIDs: [CBUUID]?,
+        withServices serviceUUIDs: [CBMUUID]?,
         options: [String : Any]? = nil
     ) async throws -> AsyncStream<ScanData> {
         try await withCheckedThrowingContinuation { continuation in
@@ -120,7 +121,7 @@ public class CentralManager {
     /// Cancels an active or pending local connection to a peripheral.
     public func cancelPeripheralConnection(_ peripheral: Peripheral) async throws {
         let peripheralState = peripheral.cbPeripheral.state
-        guard peripheralState == CBPeripheralState.connecting || peripheralState == CBPeripheralState.connected else {
+        guard peripheralState == CBMPeripheralState.connecting || peripheralState == CBMPeripheralState.connected else {
             Self.logger.error("Unable to cancel connection: no connection to peripheral \(peripheral.identifier) exists nor being attempted")
             throw BluetoothError.noConnectionToPeripheralExists
         }
@@ -144,20 +145,23 @@ public class CentralManager {
     }
     
     /// Returns a list of the peripherals connected to the system whose services match a given set of criteria.
-    public func retrieveConnectedPeripherals(withServices serviceUUIDs: [CBUUID]) -> [Peripheral] {
+    public func retrieveConnectedPeripherals(withServices serviceUUIDs: [CBMUUID]) -> [Peripheral] {
         self.cbCentralManager.retrieveConnectedPeripherals(withServices: serviceUUIDs).map { Peripheral($0) }
     }
 
+    /// TODO: Shold be implemented in CoreBluetoothMock
     /// Returns a Boolean that indicates whether the device supports a specific set of features.
+    /*
     @available(macOS, unavailable)
-    public static func supports(_ features: CBCentralManager.Feature) -> Bool {
-        CBCentralManager.supports(features)
+    public static func supports(_ features: CBMCentralManager.Feature) -> Bool {
+        CBMCentralManager.supports(features)
     }
+     */
     
     /// Creates the async stream where scan data will get added as part of scanning for peripherals.
     /// - Note: The stream is responsable for starting scan.
     private func createScanDataStream(
-        withServices serviceUUIDs: [CBUUID]?,
+        withServices serviceUUIDs: [CBMUUID]?,
         options: [String : Any]? = nil
     ) -> AsyncStream<ScanData> {
         AsyncStream(ScanData.self) { continuation in
@@ -189,14 +193,14 @@ public class CentralManager {
 
 // MARK: CBCentralManagerDelegate
 
-extension CentralManager.DelegateWrapper: CBCentralManagerDelegate {
+extension CentralManager.DelegateWrapper: CBMCentralManagerDelegate {
     private typealias Utils = CentralManagerUtils
     
     private static var logger: Logger = {
         CentralManager.logger
     }()
     
-    func centralManagerDidUpdateState(_ central: CBCentralManager) {
+    func centralManagerDidUpdateState(_ central: CBMCentralManager) {
         Task {
             defer {
                 self.context.eventSubject.send(.didUpdateState(state: central.state))
@@ -209,8 +213,8 @@ extension CentralManager.DelegateWrapper: CBCentralManagerDelegate {
     }
     
     func centralManager(
-        _ cbCentralManager: CBCentralManager,
-        didDiscover cbPeripheral: CBPeripheral,
+        _ cbCentralManager: CBMCentralManager,
+        didDiscover cbPeripheral: CBMPeripheral,
         advertisementData: [String : Any],
         rssi RSSI: NSNumber
     ) {
@@ -230,7 +234,7 @@ extension CentralManager.DelegateWrapper: CBCentralManagerDelegate {
         }
     }
     
-    func centralManager(_ cbCentralManager: CBCentralManager, didConnect peripheral: CBPeripheral) {
+    func centralManager(_ cbCentralManager: CBMCentralManager, didConnect peripheral: CBMPeripheral) {
         Task {
             Self.logger.info("Connected to peripheral \(peripheral.identifier)")
             
@@ -245,8 +249,8 @@ extension CentralManager.DelegateWrapper: CBCentralManagerDelegate {
     }
     
     func centralManager(
-        _ cbCentralManager: CBCentralManager,
-        didFailToConnect peripheral: CBPeripheral,
+        _ cbCentralManager: CBMCentralManager,
+        didFailToConnect peripheral: CBMPeripheral,
         error: Error?
     ) {
         Task {
@@ -265,8 +269,8 @@ extension CentralManager.DelegateWrapper: CBCentralManagerDelegate {
     }
     
     func centralManager(
-        _ cbCentralManager: CBCentralManager,
-        didDisconnectPeripheral peripheral: CBPeripheral,
+        _ cbCentralManager: CBMCentralManager,
+        didDisconnectPeripheral peripheral: CBMPeripheral,
         error: Error?
     ) {
         Task {

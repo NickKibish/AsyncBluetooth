@@ -1,8 +1,8 @@
 //  Copyright (c) 2021 Manuel Fernandez-Peix Perez. All rights reserved.
 
 import Foundation
-import CoreBluetooth
 import Combine
+import CoreBluetoothMock
 import os.log
 
 /// A remote peripheral device.
@@ -42,7 +42,7 @@ public class Peripheral {
     }
     
     /// The connection state of the peripheral.
-    public var state: CBPeripheralState {
+    public var state: CBMPeripheralState {
         self.cbPeripheral.state
     }
     
@@ -55,14 +55,14 @@ public class Peripheral {
         #endif
     }
     
-    let cbPeripheral: CBPeripheral
+    let cbPeripheral: CBMPeripheral
     
     private let context: PeripheralContext
     /// The delegate object that will receive `cbPeripheral`.
     /// - Note: We need to hold on to it because `cbPeripheral` has a weak reference to it.
     private let cbPeripheralDelegate: DelegateWrapper
     
-    init(_ cbPeripheral: CBPeripheral) {
+    init(_ cbPeripheral: CBMPeripheral) {
         self.cbPeripheral = cbPeripheral
         
         // By reusing the cbPeripheralDelegate and context, we guarantee that we will enqueue calls to the peripheral
@@ -90,32 +90,35 @@ public class Peripheral {
         }
     }
     
+    /// TODO: Implement this in CoreBluetoothMock
     /// Attempts to open an L2CAP channel to the peripheral using the supplied Protocol/Service Multiplexer (PSM).
+    /*
     @available(iOS 11.0, *)
-    public func openL2CAPChannel(_ PSM: CBL2CAPPSM) async throws {
+    public func openL2CAPChannel(_ PSM: CBML2CAPPSM) async throws {
         try await self.context.openL2CAPChannelExecutor.enqueue { [weak self] in
             self?.cbPeripheral.openL2CAPChannel(PSM)
         }
     }
+    */
     
     // MARK: Public: Services
     
     /// Discovers the specified services of the peripheral.
-    public func discoverServices(_ serviceUUIDs: [CBUUID]?) async throws {
+    public func discoverServices(_ serviceUUIDs: [CBMUUID]?) async throws {
         try await self.context.discoverServiceExecutor.enqueue { [weak self] in
             self?.cbPeripheral.discoverServices(serviceUUIDs)
         }
     }
     
     /// Discovers the specified included services of a previously-discovered service.
-    public func discoverIncludedServices(_ includedServiceUUIDs: [CBUUID]?, for service: Service) async throws {
+    public func discoverIncludedServices(_ includedServiceUUIDs: [CBMUUID]?, for service: Service) async throws {
         try await self.discoverIncludedServices(includedServiceUUIDs, for: service.cbService)
     }
     
     // MARK: Public: Characteristics
     
     /// The maximum amount of data, in bytes, you can send to a characteristic in a single write type.
-    public func maximumWriteValueLength(for type: CBCharacteristicWriteType) -> Int {
+    public func maximumWriteValueLength(for type: CBMCharacteristicWriteType) -> Int {
         self.cbPeripheral.maximumWriteValueLength(for: type)
     }
     
@@ -125,7 +128,7 @@ public class Peripheral {
     }
     
     /// Discovers the specified characteristics of a service.
-    public func discoverCharacteristics(_ characteristicUUIDs: [CBUUID]?, for service: Service) async throws {
+    public func discoverCharacteristics(_ characteristicUUIDs: [CBMUUID]?, for service: Service) async throws {
         try await self.discoverCharacteristics(characteristicUUIDs, for: service.cbService)
     }
     
@@ -135,7 +138,7 @@ public class Peripheral {
     }
     
     /// Writes the value of a characteristic.
-    public func writeValue(_ data: Data, for characteristic: Characteristic, type: CBCharacteristicWriteType) async throws {
+    public func writeValue(_ data: Data, for characteristic: Characteristic, type: CBMCharacteristicWriteType) async throws {
         try await self.writeValue(data, for: characteristic.cbCharacteristic, type: type)
     }
     
@@ -158,7 +161,7 @@ public class Peripheral {
     
     // MARK: Internal: Services
     
-    func discoverIncludedServices(_ includedServiceUUIDs: [CBUUID]?, for service: CBService) async throws {
+    func discoverIncludedServices(_ includedServiceUUIDs: [CBMUUID]?, for service: CBMService) async throws {
         try await self.context.discoverIncludedServicesExecutor.enqueue(withKey: service.uuid) { [weak self] in
             self?.cbPeripheral.discoverIncludedServices(includedServiceUUIDs, for: service)
         }
@@ -166,19 +169,19 @@ public class Peripheral {
     
     // MARK: Internal: Characteristics
     
-    func setNotifyValue(_ enabled: Bool, for characteristic: CBCharacteristic) async throws {
+    func setNotifyValue(_ enabled: Bool, for characteristic: CBMCharacteristic) async throws {
         try await self.context.setNotifyValueExecutor.enqueue(withKey: characteristic.uuid) { [weak self] in
             self?.cbPeripheral.setNotifyValue(enabled, for: characteristic)
         }
     }
     
-    func discoverCharacteristics(_ characteristicUUIDs: [CBUUID]?, for service: CBService) async throws {
+    func discoverCharacteristics(_ characteristicUUIDs: [CBMUUID]?, for service: CBMService) async throws {
         try await self.context.discoverCharacteristicsExecutor.enqueue(withKey: service.uuid) { [weak self] in
             self?.cbPeripheral.discoverCharacteristics(characteristicUUIDs, for: service)
         }
     }
     
-    func readValue(for characteristic: CBCharacteristic) async throws {
+    func readValue(for characteristic: CBMCharacteristic) async throws {
         try await self.context.readCharacteristicValueExecutor.enqueue(withKey: characteristic.uuid) { [weak self] in
             self?.cbPeripheral.readValue(for: characteristic)
         }
@@ -186,8 +189,8 @@ public class Peripheral {
     
     func writeValue(
         _ data: Data,
-        for characteristic: CBCharacteristic,
-        type: CBCharacteristicWriteType
+        for characteristic: CBMCharacteristic,
+        type: CBMCharacteristicWriteType
     ) async throws {
         try await self.context.writeCharacteristicValueExecutor.enqueue(withKey: characteristic.uuid) { [weak self] in
             guard let self = self else { return }
@@ -204,19 +207,19 @@ public class Peripheral {
     
     // MARK: Internal: Descriptors
     
-    func discoverDescriptors(for characteristic: CBCharacteristic) async throws {
+    func discoverDescriptors(for characteristic: CBMCharacteristic) async throws {
         try await self.context.discoverDescriptorsExecutor.enqueue(withKey: characteristic.uuid) { [weak self] in
             self?.cbPeripheral.discoverDescriptors(for: characteristic)
         }
     }
     
-    func readValue(for descriptor: CBDescriptor) async throws {
+    func readValue(for descriptor: CBMDescriptor) async throws {
         try await self.context.readDescriptorValueExecutor.enqueue(withKey: descriptor.uuid) { [weak self] in
             self?.cbPeripheral.readValue(for: descriptor)
         }
     }
     
-    func writeValue(_ data: Data, for descriptor: CBDescriptor) async throws {
+    func writeValue(_ data: Data, for descriptor: CBMDescriptor) async throws {
         try await self.context.writeDescriptorValueExecutor.enqueue(withKey: descriptor.uuid) { [weak self] in
             self?.cbPeripheral.writeValue(data, for: descriptor)
         }
@@ -225,12 +228,12 @@ public class Peripheral {
 
 // MARK: CBPeripheralDelegate
 
-extension Peripheral.DelegateWrapper: CBPeripheralDelegate {
+extension Peripheral.DelegateWrapper: CBMPeripheralDelegate {
     private static var logger: Logger = {
         Peripheral.logger
     }()
     
-    func peripheral(_ cbPeripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
+    func peripheral(_ cbPeripheral: CBMPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
         Task {
             do {
                 let result = CallbackUtils.result(for: RSSI, error: error)
@@ -241,7 +244,7 @@ extension Peripheral.DelegateWrapper: CBPeripheralDelegate {
         }
     }
     
-    func peripheral(_ cbPeripheral: CBPeripheral, didDiscoverServices error: Error?) {
+    func peripheral(_ cbPeripheral: CBMPeripheral, didDiscoverServices error: Error?) {
         Task {
             do {
                 let result = CallbackUtils.result(for: (), error: error)
@@ -252,7 +255,7 @@ extension Peripheral.DelegateWrapper: CBPeripheralDelegate {
         }
     }
     
-    func peripheral(_ cbPeripheral: CBPeripheral, didDiscoverIncludedServicesFor service: CBService, error: Error?) {
+    func peripheral(_ cbPeripheral: CBMPeripheral, didDiscoverIncludedServicesFor service: CBMService, error: Error?) {
         Task {
             do {
                 let result = CallbackUtils.result(for: (), error: error)
@@ -265,7 +268,7 @@ extension Peripheral.DelegateWrapper: CBPeripheralDelegate {
         }
     }
     
-    func peripheral(_ cbPeripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+    func peripheral(_ cbPeripheral: CBMPeripheral, didDiscoverCharacteristicsFor service: CBMService, error: Error?) {
         Task {
             do {
                 let result = CallbackUtils.result(for: (), error: error)
@@ -278,7 +281,7 @@ extension Peripheral.DelegateWrapper: CBPeripheralDelegate {
         }
     }
     
-    func peripheral(_ cbPeripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+    func peripheral(_ cbPeripheral: CBMPeripheral, didUpdateValueFor characteristic: CBMCharacteristic, error: Error?) {
         Task {
             do {
                 let result = CallbackUtils.result(for: (), error: error)
@@ -300,7 +303,7 @@ extension Peripheral.DelegateWrapper: CBPeripheralDelegate {
         }
     }
     
-    func peripheral(_ cbPeripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
+    func peripheral(_ cbPeripheral: CBMPeripheral, didWriteValueFor characteristic: CBMCharacteristic, error: Error?) {
         Task {
             do {
                 let result = CallbackUtils.result(for: (), error: error)
@@ -314,8 +317,8 @@ extension Peripheral.DelegateWrapper: CBPeripheralDelegate {
     }
     
     func peripheral(
-        _ cbPeripheral: CBPeripheral,
-        didUpdateNotificationStateFor characteristic: CBCharacteristic,
+        _ cbPeripheral: CBMPeripheral,
+        didUpdateNotificationStateFor characteristic: CBMCharacteristic,
         error: Error?
     ) {
         Task {
@@ -331,8 +334,8 @@ extension Peripheral.DelegateWrapper: CBPeripheralDelegate {
     }
     
     func peripheral(
-        _ cbPeripheral: CBPeripheral,
-        didDiscoverDescriptorsFor characteristic: CBCharacteristic,
+        _ cbPeripheral: CBMPeripheral,
+        didDiscoverDescriptorsFor characteristic: CBMCharacteristic,
         error: Error?
     ) {
         Task {
@@ -347,7 +350,7 @@ extension Peripheral.DelegateWrapper: CBPeripheralDelegate {
         }
     }
     
-    func peripheral(_ cbPeripheral: CBPeripheral, didUpdateValueFor descriptor: CBDescriptor, error: Error?) {
+    func peripheral(_ cbPeripheral: CBMPeripheral, didUpdateValueFor descriptor: CBMDescriptor, error: Error?) {
         Task {
             do {
                 let result = CallbackUtils.result(for: (), error: error)
@@ -360,7 +363,7 @@ extension Peripheral.DelegateWrapper: CBPeripheralDelegate {
         }
     }
     
-    func peripheral(_ cbPeripheral: CBPeripheral, didWriteValueFor descriptor: CBDescriptor, error: Error?) {
+    func peripheral(_ cbPeripheral: CBMPeripheral, didWriteValueFor descriptor: CBMDescriptor, error: Error?) {
         Task {
             do {
                 let result = CallbackUtils.result(for: (), error: error)
@@ -373,7 +376,7 @@ extension Peripheral.DelegateWrapper: CBPeripheralDelegate {
         }
     }
     
-    func peripheral(_ cbPeripheral: CBPeripheral, didOpen channel: CBL2CAPChannel?, error: Error?) {
+    func peripheral(_ cbPeripheral: CBMPeripheral, didOpen channel: CBML2CAPChannel?, error: Error?) {
         Task {
             do {
                 let result = CallbackUtils.result(for: (), error: error)

@@ -1,7 +1,6 @@
 //  Copyright (c) 2021 Manuel Fernandez-Peix Perez. All rights reserved.
 
 import Foundation
-import CoreBluetooth
 import Combine
 
 /// Contains the objects necessary to track a Central Manager's commands.

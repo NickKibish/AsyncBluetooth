@@ -1,7 +1,7 @@
 //  Copyright (c) 2021 Manuel Fernandez-Peix Perez. All rights reserved.
 
 import Foundation
-import CoreBluetooth
+import CoreBluetoothMock
 
 extension Peripheral {
     /// Reads and parses the value of a characteristic with a given identifier, of a service with a
@@ -38,7 +38,7 @@ extension Peripheral {
         _ value: Value,
         forCharacteristicWithUUID characteristicUUID: UUID,
         ofServiceWithUUID serviceUUID: UUID,
-        type: CBCharacteristicWriteType = .withResponse
+        type: CBMCharacteristicWriteType = .withResponse
     ) async throws where Value: PeripheralDataConvertible {
         guard let characteristic = try await self.findCharacteristic(
             uuid: characteristicUUID,
@@ -57,13 +57,13 @@ extension Peripheral {
     private func findCharacteristic(
         uuid characteristicUUID: UUID,
         ofServiceWithUUID serviceUUID: UUID
-    ) async throws -> CBCharacteristic? {
+    ) async throws -> CBMCharacteristic? {
         guard let service = try await self.findService(uuid: serviceUUID) else {
             return nil
         }
         
-        let characteristicCBUUID = CBUUID(nsuuid: characteristicUUID)
-        let discoveredCharacteristic: () -> CBCharacteristic? = {
+        let characteristicCBUUID = CBMUUID(nsuuid: characteristicUUID)
+        let discoveredCharacteristic: () -> CBMCharacteristic? = {
             service.characteristics?.first(where: { $0.uuid == characteristicCBUUID })
         }
         
@@ -76,9 +76,9 @@ extension Peripheral {
         return discoveredCharacteristic()
     }
     
-    private func findService(uuid: UUID) async throws -> CBService? {
-        let cbUUID = CBUUID(nsuuid: uuid)
-        let discoveredService: () -> CBService? = {
+    private func findService(uuid: UUID) async throws -> CBMService? {
+        let cbUUID = CBMUUID(nsuuid: uuid)
+        let discoveredService: () -> CBMService? = {
             self.cbPeripheral.services?.first(where: { $0.uuid == cbUUID })
         }
         
