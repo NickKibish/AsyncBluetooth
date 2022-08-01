@@ -2,6 +2,7 @@
 
 import Foundation
 import CoreBluetoothMock
+import CoreBluetooth
 import Combine
 
 /// Contains the objects necessary to track a Peripheral's commands.

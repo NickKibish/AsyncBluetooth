@@ -1,6 +1,7 @@
 //  Copyright (c) 2021 Manuel Fernandez-Peix Perez. All rights reserved.
 
 import Foundation
+import CoreBluetooth
 import CoreBluetoothMock
 
 /// A characteristic of a remote peripheral’s service.
@@ -15,6 +16,10 @@ public struct Characteristic {
     /// The Bluetooth-specific UUID of the characteristic.
     public var uuid: CBMUUID {
         self.cbCharacteristic.uuid
+    }
+    
+    public var identifier: UUID {
+        UUID(uuidString: self.uuid.uuidString)!
     }
     
     public var properties: CBMCharacteristicProperties {

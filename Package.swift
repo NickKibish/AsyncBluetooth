@@ -25,7 +25,10 @@ let package = Package(
         ),
         .testTarget(
             name: "AsyncBluetoothTests",
-            dependencies: ["AsyncBluetooth"],
+            dependencies: [
+                "AsyncBluetooth",
+                    .product(name: "CoreBluetoothMock", package: "IOS-CoreBluetooth-Mock")
+            ],
             path: "Tests"
         ),
     ]

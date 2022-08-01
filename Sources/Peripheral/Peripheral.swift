@@ -3,6 +3,7 @@
 import Foundation
 import Combine
 import CoreBluetoothMock
+import CoreBluetooth
 import os.log
 
 /// A remote peripheral device.
@@ -110,6 +111,14 @@ public class Peripheral {
         }
     }
     
+    public func discoverServices(_ serviceUUIDs: [UUID]?) async throws {
+        return try await discoverServices(serviceUUIDs.map {
+            $0.map {
+                CBMUUID(nsuuid: $0)
+            }
+        })
+    }
+    
     /// Discovers the specified included services of a previously-discovered service.
     public func discoverIncludedServices(_ includedServiceUUIDs: [CBMUUID]?, for service: Service) async throws {
         try await self.discoverIncludedServices(includedServiceUUIDs, for: service.cbService)
@@ -130,6 +139,11 @@ public class Peripheral {
     /// Discovers the specified characteristics of a service.
     public func discoverCharacteristics(_ characteristicUUIDs: [CBMUUID]?, for service: Service) async throws {
         try await self.discoverCharacteristics(characteristicUUIDs, for: service.cbService)
+    }
+    
+    public func discover(characteristics characteristicUUIDs: [UUID]?, for service: Service) async throws {
+        let ids = characteristicUUIDs.map { $0.map { CBMUUID(string: $0.uuidString) } }
+        try await discoverCharacteristics(ids, for: service)
     }
     
     /// Retrieves the value of a specified characteristic.

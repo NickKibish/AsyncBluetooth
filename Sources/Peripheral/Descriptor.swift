@@ -2,6 +2,7 @@
 
 import Foundation
 import CoreBluetoothMock
+import CoreBluetooth
 
 /// An object that provides further information about a remote peripheral’s characteristic.
 /// - This class acts as a wrapper for `CBDescriptor`.

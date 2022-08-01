@@ -2,6 +2,7 @@
 
 import Foundation
 import CoreBluetoothMock
+import CoreBluetooth
 
 /// A collection of data and associated behaviors that accomplish a function or feature of a device.
 /// - This class acts as a wrapper around `CBService`.
@@ -32,5 +33,9 @@ public struct Service {
     
     init(_ cbService: CBMService) {
         self.cbService = cbService
+    }
+    
+    public var identifier: UUID {
+        UUID(uuidString: uuid.uuidString)!
     }
 }

@@ -71,6 +71,18 @@ public class CentralManager {
     
     /// Scans for peripherals that are advertising services.
     public func scanForPeripherals(
+        withServices serviceUUIDs: [UUID]?,
+        options: [String : Any]? = nil
+    ) async throws -> AsyncStream<ScanData> {
+        return try await scanForPeripherals(withServices: serviceUUIDs.map {
+            $0.map {
+                CBMUUID(nsuuid: $0)
+            }
+        }, options: options)
+    }
+    
+    /// Scans for peripherals that are advertising services.
+    public func scanForPeripherals(
         withServices serviceUUIDs: [CBMUUID]?,
         options: [String : Any]? = nil
     ) async throws -> AsyncStream<ScanData> {
@@ -216,13 +228,13 @@ extension CentralManager.DelegateWrapper: CBMCentralManagerDelegate {
         _ cbCentralManager: CBMCentralManager,
         didDiscover cbPeripheral: CBMPeripheral,
         advertisementData: [String : Any],
-        rssi RSSI: NSNumber
+        rssi: NSNumber
     ) {
         Task {
             let scanData = ScanData(
                 peripheral: Peripheral(cbPeripheral),
                 advertisementData: advertisementData,
-                rssi: RSSI
+                rssi: rssi.intValue
             )
             guard let continuation = await self.context.scanForPeripheralsContext.continuation else {
                 Self.logger.info("Ignoring peripheral '\(scanData.peripheral.name ?? "unknown", privacy: .private)' because the central manager is not scanning")
